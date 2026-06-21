@@ -1,464 +1,65 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>สถิติการเล่น - NeXi-Client</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-gradient: linear-gradient(135deg, #0f0c20 0%, #15102a 50%, #060210 100%);
-      --card-bg: rgba(255, 255, 255, 0.03);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --neon-purple: #bb86fc;
-      --neon-pink: #ff79c6;
-      --neon-cyan: #03dac6;
-      --success: #2ec4b6;
-      --danger: #e63946;
-      --text-main: #f8f9fa;
-      --text-sub: #a0aec0;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Outfit', 'Sarabun', sans-serif;
-      background: var(--bg-gradient);
-      color: var(--text-main);
-      min-height: 100vh;
-      padding: 24px;
-      overflow-x: hidden;
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.01);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--neon-purple);
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    /* Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 32px;
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 16px;
-    }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: 0.5px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: var(--text-sub);
-      margin-top: 4px;
-    }
-
-    /* Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-
-    .stat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      text-align: center;
-      transition: transform 0.3s ease, border-color 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background: transparent;
-      transition: background 0.3s ease;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .stat-card.kdr::before { background: var(--neon-purple); }
-    .stat-card.winrate::before { background: var(--neon-cyan); }
-    .stat-card.matches::before { background: var(--neon-pink); }
-    .stat-card.kills::before { background: var(--success); }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-sub);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-
-    .stat-value {
-      font-size: 32px;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-
-    .stat-desc {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-
-    /* Detail Grid */
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-
-    .detail-card {
-      background: rgba(255, 255, 255, 0.015);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .detail-name {
-      font-size: 13px;
-      color: var(--text-sub);
-    }
-
-    .detail-val {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    /* Section Table */
-    .history-section {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 24px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      margin-bottom: 32px;
-    }
-
-    .section-header {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      padding-bottom: 12px;
-    }
-
-    .table-container {
-      overflow-x: auto;
-      max-height: 280px;
-      overflow-y: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-
-    th, td {
-      padding: 12px 16px;
-      font-size: 14px;
-    }
-
-    th {
-      color: var(--text-sub);
-      font-weight: 600;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    tr {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    tr:last-child {
-      border-bottom: none;
-    }
-
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      text-align: center;
-    }
-
-    .badge.win {
-      background: rgba(46, 196, 182, 0.15);
-      color: var(--success);
-      border: 1px solid rgba(46, 196, 182, 0.25);
-    }
-
-    .badge.lose {
-      background: rgba(230, 57, 70, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(230, 57, 70, 0.25);
-    }
-
-    /* Reset Button */
-    .btn-container {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .btn-reset {
-      background: transparent;
-      border: 1px solid var(--danger);
-      color: var(--danger);
-      padding: 10px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-
-    .btn-reset:hover {
-      background: var(--danger);
-      color: #fff;
-      box-shadow: 0 0 12px rgba(230, 57, 70, 0.4);
-    }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 40px 0;
-      color: var(--text-sub);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติการแข่ง - NeXi-Client</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="stats.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>ประวัติการแข่งขัน</h1>
-        <div class="subtitle">NeXi-Client Statistics Dashboard</div>
-      </div>
-    </header>
+    <div class="container">
+        <header>
+            <h1>สถิติการเล่นของคุณ</h1>
+            <p>อัปเดตแบบเรียลไทม์จากระบบฐานข้อมูล</p>
+            <button id="clearBtn" class="clear-btn">ล้างข้อมูล</button>
+        </header>
 
-    <!-- Stats summary widgets -->
-    <div class="stats-grid">
-      <div class="stat-card kdr">
-        <div class="stat-label">อัตราฆ่า/ตาย (K/D)</div>
-        <div class="stat-value" id="val-kdr">0.00</div>
-        <div class="stat-desc">สถิติวัดระดับฝีมือ</div>
-      </div>
-      <div class="stat-card winrate">
-        <div class="stat-label">อัตราชนะ (Win Rate)</div>
-        <div class="stat-value" id="val-winrate">0.0%</div>
-        <div class="stat-desc">เปอร์เซ็นต์ชนะการแข่ง</div>
-      </div>
-      <div class="stat-card matches">
-        <div class="stat-label">เกมที่เล่นทั้งหมด</div>
-        <div class="stat-value" id="val-matches">0</div>
-        <div class="stat-desc">จำนวนแมตช์รวม</div>
-      </div>
-      <div class="stat-card kills">
-        <div class="stat-label">คิลทั้งหมด (Total Kills)</div>
-        <div class="stat-value" id="val-kills">0</div>
-        <div class="stat-desc">การกําจัดศัตรูรวม</div>
-      </div>
+        <section class="summary-cards">
+            <div class="card">
+                <div class="card-icon">🎯</div>
+                <h3>จำนวนคิลสะสม</h3>
+                <p id="totalKills" class="stat-value">0</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">💀</div>
+                <h3>การตายสะสม</h3>
+                <p id="totalDeaths" class="stat-value">0</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">📈</div>
+                <h3>K/D Ratio</h3>
+                <p id="kdRatio" class="stat-value">0.00</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">⭐</div>
+                <h3>คะแนนรวม</h3>
+                <p id="totalScore" class="stat-value">0</p>
+            </div>
+        </section>
+
+        <section class="match-history">
+            <h2>ประวัติการแข่งล่าสุด</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>วัน/เวลา</th>
+                            <th>ผลลัพธ์</th>
+                            <th>คิล</th>
+                            <th>ตาย</th>
+                            <th>แอสซิสต์</th>
+                            <th>เฮดช็อต</th>
+                            <th>คะแนน</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matchTableBody">
+                        <!-- Data will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
-
-    <!-- Stats detailed breakdown -->
-    <div class="detail-grid">
-      <div class="detail-card">
-        <span class="detail-name">เดธทั้งหมด</span>
-        <span class="detail-val" id="detail-deaths">0</span>
-      </div>
-      <div class="detail-card">
-        <span class="detail-name">ช่วยคิล (Assists)</span>
-        <span class="detail-val" id="detail-assists">0</span>
-      </div>
-      <div class="detail-card">
-        <span class="detail-name">ยิงหัว (Headshots)</span>
-        <span class="detail-val" id="detail-headshots">0</span>
-      </div>
-      <div class="detail-card">
-        <span class="detail-name">คะแนนสะสม</span>
-        <span class="detail-val" id="detail-score">0</span>
-      </div>
-    </div>
-
-    <!-- Match History list -->
-    <div class="history-section">
-      <div class="section-header">ประวัติการแข่งล่าสุด</div>
-      <div class="table-container">
-        <table id="match-table">
-          <thead>
-            <tr>
-              <th>ผลลัพธ์</th>
-              <th>คิล/ตาย/ช่วย</th>
-              <th>แผนที่</th>
-              <th>โหมด</th>
-              <th>เวลา</th>
-            </tr>
-          </thead>
-          <tbody id="match-rows">
-            <!-- Loaded dynamically via js -->
-          </tbody>
-        </table>
-        <div id="no-matches" class="empty-state" style="display: none;">
-          ยังไม่พบข้อมูลการแข่งขันในประวัติ
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom actions -->
-    <div class="btn-container">
-      <button class="btn-reset" onclick="resetDb()">ล้างประวัติการแข่ง</button>
-    </div>
-  </div>
-
-  <script>
-    const { ipcRenderer } = require('electron');
-
-    function loadStats() {
-      // Fetch stats from local DB via Electron IPC Sync
-      const stats = ipcRenderer.sendSync('get-db-stats');
-      const { summary, matches } = stats;
-
-      // Update Summary Cards
-      document.getElementById('val-kdr').innerText = summary.kdr;
-      document.getElementById('val-winrate').innerText = summary.winRate + '%';
-      document.getElementById('val-matches').innerText = summary.totalMatches;
-      document.getElementById('val-kills').innerText = summary.totalKills;
-
-      // Update Detail Grid
-      document.getElementById('detail-deaths').innerText = summary.totalDeaths;
-      document.getElementById('detail-assists').innerText = summary.totalAssists;
-      document.getElementById('detail-headshots').innerText = summary.totalHeadshots;
-      document.getElementById('detail-score').innerText = summary.totalScore.toLocaleString();
-
-      // Render Matches Table
-      const matchRows = document.getElementById('match-rows');
-      const noMatches = document.getElementById('no-matches');
-      matchRows.innerHTML = '';
-
-      if (matches.length === 0) {
-        noMatches.style.display = 'block';
-      } else {
-        noMatches.style.display = 'none';
-        
-        // Reverse array to show newest matches first
-        const sortedMatches = [...matches].reverse();
-        sortedMatches.forEach(m => {
-          const tr = document.createElement('tr');
-
-          // Result badge (Victory / Defeat)
-          const resultTd = document.createElement('td');
-          const badgeSpan = document.createElement('span');
-          badgeSpan.className = m.victory ? 'badge win' : 'badge lose';
-          badgeSpan.innerText = m.victory ? 'ชนะ' : 'แพ้';
-          resultTd.appendChild(badgeSpan);
-
-          // KDA text
-          const kdaTd = document.createElement('td');
-          kdaTd.innerText = `${m.kills} / ${m.deaths} / ${m.assists}`;
-
-          // Map
-          const mapTd = document.createElement('td');
-          mapTd.innerText = translateMap(m.map);
-
-          // Mode
-          const modeTd = document.createElement('td');
-          modeTd.innerText = translateMode(m.mode);
-
-          // Date format
-          const dateTd = document.createElement('td');
-          const date = new Date(m.timestamp);
-          dateTd.innerText = date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' });
-
-          tr.appendChild(resultTd);
-          tr.appendChild(kdaTd);
-          tr.appendChild(mapTd);
-          tr.appendChild(modeTd);
-          tr.appendChild(dateTd);
-
-          matchRows.appendChild(tr);
-        });
-      }
-    }
-
-    function translateMap(map) {
-      const maps = {
-        'Sierra': 'เซียร่า (Sierra)',
-        'Sierra2v2': 'เซียร่า 2v2',
-        'Tundra': 'ทุนดรา (Tundra)',
-        'Mistle': 'มิสเซิล (Mistle)',
-        'Temple': 'วิหารโบราณ (Temple)',
-        'Xibalba': 'ชีบัลบา (Xibalba)',
-        'Hexagon': 'เฮกซากอน (Hexagon)'
-      };
-      return maps[map] || map;
-    }
-
-    function translateMode(mode) {
-      const modes = {
-        'TDM': 'ทีมเดธแมตช์ (TDM)',
-        'FFA': 'ตะลุมบอน (FFA)',
-        'GUNGAME': 'ยิงเปลี่ยนปืน (Gun Game)',
-        'PAYLOAD': 'เข็นรถ (Payload)'
-      };
-      return modes[mode] || mode;
-    }
-
-    function resetDb() {
-      const confirmReset = confirm("คุณต้องการล้างประวัติการแข่งและสถิติทั้งหมดใช่หรือไม่? (การดําเนินการนี้ไม่สามารถย้อนกลับได้)");
-      if (confirmReset) {
-        ipcRenderer.sendSync('clear-db-stats');
-        loadStats();
-      }
-    }
-
-    // Load initial stats on launch
-    document.addEventListener('DOMContentLoaded', loadStats);
-  </script>
+    <script src="stats.js"></script>
 </body>
 </html>

@@ -1002,7 +1002,16 @@ const customMatchEndMessages = () => {
       this.skills = [],
       pc.stats) {
           var e = pc.stats[t];
-          e.isMe && (this.skills = [{
+          e.isMe && (
+          typeof window.NexiDb !== 'undefined' && window.NexiDb.saveMatchStats({
+              kills: e.kill || 0,
+              deaths: e.death || 0,
+              score: e.score || 0,
+              assist: e.assist || 0,
+              headshot: e.headshot || 0,
+              result: pc.isVictory ? "Victory" : "Defeat"
+          }).catch(err => console.error("Stats save error:", err)),
+          this.skills = [{
               name: "ค่าประสบการณ์ (XP)",
               score: e.experience
           }, {

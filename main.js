@@ -22,20 +22,21 @@ const LocalDatabase = require('./local-db');
 const db = new LocalDatabase();
 
 // Setup database IPC channels
-ipcMain.on('save-match-stats', (event, stats) => {
+ipcMain.handle('save-match-stats', async (event, stats) => {
   db.insertMatch(stats);
+  return true;
 });
 
-ipcMain.on('get-db-stats', (event) => {
-  event.returnValue = {
+ipcMain.handle('get-db-stats', async (event) => {
+  return {
     summary: db.getStatsSummary(),
     matches: db.getMatches()
   };
 });
 
-ipcMain.on('clear-db-stats', (event) => {
+ipcMain.handle('clear-db-stats', async (event) => {
   db.clearData();
-  event.returnValue = true;
+  return true;
 });
 
 if (config.get("utilities_FPS") == null) {
@@ -273,6 +274,12 @@ function createInitWindow(url) {
   );
   initWin.webContents.on("dom-ready", (event) => {
     initWin.setTitle(`NeXi-Client V${app.getVersion()}`);
+    // Inject nexi-client.js logic to hook into the game
+    fs.readFile(path.join(__dirname, 'nexi-client.js'), 'utf-8', (err, data) => {
+      if (!err) {
+        initWin.webContents.executeJavaScript(data).catch(console.error);
+      }
+    });
     event.preventDefault();
   });
   initWin.webContents.on("new-window", (event, url) => {
