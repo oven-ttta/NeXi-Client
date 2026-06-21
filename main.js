@@ -7,6 +7,7 @@ const {
   dialog,
   BrowserWindow,
   screen,
+  ipcMain,
 } = require("electron");
 const discord = require("discord-rpc");
 const Store = require("electron-store");
@@ -16,6 +17,26 @@ const OS = require("os");
 const fs = require('fs');
 const prompt = require("electron-prompt");
 const fetch = require('node-fetch');
+
+const LocalDatabase = require('./local-db');
+const db = new LocalDatabase();
+
+// Setup database IPC channels
+ipcMain.on('save-match-stats', (event, stats) => {
+  db.insertMatch(stats);
+});
+
+ipcMain.on('get-db-stats', (event) => {
+  event.returnValue = {
+    summary: db.getStatsSummary(),
+    matches: db.getMatches()
+  };
+});
+
+ipcMain.on('clear-db-stats', (event) => {
+  db.clearData();
+  event.returnValue = true;
+});
 
 if (config.get("utilities_FPS") == null) {
   config.set("utilities_FPS", true);
@@ -64,6 +85,11 @@ function createInitWindow(url) {
     width: width * size,
     height: height * size,
     show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
+      contextIsolation: false
+    }
   });
 
   initWin.loadURL(url);
@@ -85,12 +111,12 @@ function createInitWindow(url) {
   });
   function DiscordRPC() {
     var c = {
-      a: "Idling",
-      b: "In a Game",
-      c: "Spectating a Match",
-      d: "Looking for a Game",
-      e: "In Menu",
-      f: "Loading...",
+      a: "กำลังสแตนด์บาย (Idling)",
+      b: "กำลังเล่นเกม (In Game)",
+      c: "กำลังรับชมการแข่ง (Spectating)",
+      d: "กำลังค้นหาห้องเล่น (Searching)",
+      e: "อยู่ที่หน้าเมนูหลัก (In Menu)",
+      f: "กำลังโหลดเข้าเกม... (Loading)",
     };
     const rpc = new discord.Client({
       transport: "ipc",
@@ -172,7 +198,7 @@ function createInitWindow(url) {
         var game = currentUrl.split('#').pop();
         var inviteUrl = "https://venge.io/#"+game;
         clipboard.writeText(inviteUrl);
-        initWin.webContents.executeJavaScript('pc.app.fire("Chat:Message", "NeXi-Client", "Link copied!")').catch(e=>{});
+        initWin.webContents.executeJavaScript('pc.app.fire("Chat:Message", "NeXi-Client", "คัดลอกลิงก์เชิญห้องแล้ว!")').catch(e=>{});
       }
   })
 
@@ -203,6 +229,44 @@ function createInitWindow(url) {
   });
   shortcut.register(initWin, "F10", () => {
     createSettingsWindow();
+  });
+
+  let statsWin = null;
+  shortcut.register(initWin, "F9", () => {
+    if (statsWin) {
+      if (statsWin.isFocused()) {
+        statsWin.close();
+      } else {
+        statsWin.focus();
+      }
+    } else {
+      statsWin = new BrowserWindow({
+        width: 800,
+        height: 600,
+        title: "ประวัติการแข่ง - NeXi-Client",
+        icon: path.join(__dirname, "build/game.png"),
+        webPreferences: {
+          nodeIntegration: true,
+          contextIsolation: false
+        },
+        backgroundColor: "#0d0e15",
+        show: false
+      });
+      statsWin.loadURL(`file://${__dirname}/stats.html`);
+      statsWin.removeMenu();
+      statsWin.once('ready-to-show', () => {
+        statsWin.show();
+      });
+      statsWin.on('closed', () => {
+        statsWin = null;
+      });
+    }
+  });
+
+  initWin.on('closed', () => {
+    if (statsWin) {
+      statsWin.close();
+    }
   });
   initWin.webContents.on("will-prevent-unload", (event) =>
     event.preventDefault()
@@ -271,8 +335,8 @@ function createInitWindow(url) {
   function createSettingsWindow() {
     const settings = dialog.showMessageBoxSync(initWin, {
       type: "question",
-      buttons: ["General"],
-      title: "Settings",
+      buttons: ["ทั่วไป"],
+      title: "ตั้งค่า",
       message: "",
       defaultId: 0,
       cancelId: 2,
@@ -282,30 +346,18 @@ function createInitWindow(url) {
     }
 
     function openGeneralSettings() {
-      if (config.get("utilities_FPS", true)) {
-        var fps = "Enable";
-      } else {
-        var fps = "Disable";
-      }
+      var fpsOption = config.get("utilities_FPS", true) ? "จำกัดเฟรมเรต (Limit FPS)" : "ปลดล็อกเฟรมเรต (Unlock FPS)";
+      var d3dOption = config.get("utilities_D3D11OND12", true) ? "ปิดใช้ D3D11OND12 (Disable)" : "เปิดใช้ D3D11OND12 (Enable)";
+      var rpcOption = config.get("utilities_RPC", true) ? "ปิดใช้งาน Discord RPC (Disable)" : "เปิดใช้งาน Discord RPC (Enable)";
 
-      if (config.get("utilities_D3D11OND12", true)) {
-        var d3d11ond12 = "Disable";
-      } else {
-        var d3d11ond12 = "Enable";
-      }
-      if (config.get("utilities_RPC", true)) {
-        var dc = "Disable";
-      } else {
-        var dc = "Enable";
-      }
       const options = dialog.showMessageBoxSync(initWin, {
         type: "question",
         buttons: [
-          `${fps} Frame Rate Limit Cap`,
-          `${d3d11ond12} D3D11OND12`,
-          `${dc} Discord RPC`,
+          fpsOption,
+          d3dOption,
+          rpcOption,
         ],
-        title: "Settings",
+        title: "การตั้งค่าทั่วไป",
         message: "",
         defaultId: 0,
         cancelId: 3,
@@ -346,7 +398,7 @@ function createInitWindow(url) {
     function input(msg) {
       var prompting = prompt({
         title: msg,
-        label: "Please enter your Invite link here",
+        label: "กรุณาวางลิงก์เชิญห้องเกมที่นี่:",
         value: paste,
         inputAttrs: {
           type: "url",
@@ -360,9 +412,9 @@ function createInitWindow(url) {
     function question() {
       const choice = dialog.showMessageBoxSync(initWin, {
         type: "question",
-        buttons: ["Play", "Spectate"],
-        title: "Join",
-        message: "Would you like to spectate or play?",
+        buttons: ["เล่น (Play)", "รับชม (Spectate)"],
+        title: "เข้าร่วมเกม",
+        message: "คุณต้องการเข้าร่วมเล่น หรือเข้าไปรับชมการแข่งขัน?",
         defaultId: 0,
         cancelId: 3,
       });
@@ -386,12 +438,12 @@ function createInitWindow(url) {
     if (paste.indexOf("venge.io/#") === -1) {
       paste = "https://venge.io/#00000";
       if (choice === 0) {
-        input("Play").then((r) => {
+        input("เข้าร่วมเล่น").then((r) => {
           isPaste(r, false);
         });
       } else {
         if (choice === 1) {
-          input("Spectate").then((r) => {
+          input("เข้าร่วมรับชม").then((r) => {
             isPaste(r, true);
           });
         }
@@ -416,10 +468,10 @@ autoUpdater.on('checking-for-update', () => {
 autoUpdater.on('update-available', (info) => {
     const dialogOpts = {
         type: 'info',
-        buttons: ['Alright!'],
-        title: 'NeXi-Client Update',
-        message: 'New Version of NeXi-Client has been released',
-        detail: 'It will be downloaded in the background and notify you when the download is finished.'
+        buttons: ['รับทราบ!'],
+        title: 'อัปเดต NeXi-Client',
+        message: 'มีเวอร์ชันใหม่ของ NeXi-Client ปล่อยออกมาแล้ว',
+        detail: 'ตัวอัปเดตจะดาวน์โหลดในพื้นหลังและแจ้งเตือนคุณเมื่อเสร็จสิ้น'
        }
   
        dialog.showMessageBox(dialogOpts).then((returnValue) => {
@@ -436,10 +488,10 @@ autoUpdater.on('download-progress', (progressObj) => {
 autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     const dialogOpts = {
       type: 'info',
-      buttons: ['Restart', 'Later'],
-      title: 'Application Update',
+      buttons: ['รีสตาร์ททันที', 'ไว้ทีหลัง'],
+      title: 'อัปเดตแอปพลิเคชัน',
       message: process.platform === 'win32' ? releaseNotes : releaseName,
-      detail: 'A new version has been downloaded. Restart the application to apply the updates.'
+      detail: 'ดาวน์โหลดเวอร์ชันใหม่สำเร็จแล้ว รีสตาร์ทแอปพลิเคชันเพื่อปรับใช้การอัปเดต'
      }
 
      dialog.showMessageBox(dialogOpts).then((returnValue) => {

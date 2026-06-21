@@ -41,7 +41,7 @@ const messageFix = () => {
       console.log("Rematchmaking..."),
       this.app.fire("RoomManager:Leave", !0),
       this.app.fire("Analytics:Event", "Room", "Rematchmaking"),
-      this.matchmakingTitle.element.text = "Searching for players...",
+      this.matchmakingTitle.element.text = "กำลังค้นหาผู้เล่นอื่น...",
       this.matchmakingCancel.enabled = !0,
       setTimeout(function(t) {
           t.startMatchmaking()
@@ -470,7 +470,7 @@ const customDeathMessage = () => {
       var a = this.killedBy.script.enemy.username;
       this.app.fire(
         "Overlay:Status",
-        'Eliminated by [color="#FF0000"]' + a + "[/color]"
+        'ถูกกำจัดโดย [color="#FF0000"]' + a + "[/color]"
       );
     }
     this.app.fire("Player:StopSpeaking", !0),
@@ -658,87 +658,87 @@ const inspectWeaponKeyboardBind = () => {
     var t = [{
         key: keyboardMap[pc.KEY_W],
         default_key: "W",
-        function: "Forward",
+        function: "เดินหน้า (Forward)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_S],
         default_key: "S",
-        function: "Backward",
+        function: "ถอยหลัง (Backward)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_A],
         default_key: "A",
-        function: "Left",
+        function: "เดินซ้าย (Left)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_D],
         default_key: "D",
-        function: "Right",
+        function: "เดินขวา (Right)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_SPACE],
         default_key: "SPACE",
-        function: "Jump",
+        function: "กระโดด (Jump)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_R],
         default_key: "R",
-        function: "Reload",
+        function: "รีโหลดกระสุน (Reload)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_E],
         default_key: "E",
-        function: "Melee",
+        function: "ฟันมีด (Melee)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_F],
         default_key: "F",
-        function: "Throw",
+        function: "ปาสกิล/ระเบิด (Throw)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_B],
         default_key: "B",
-        function: "Buy",
+        function: "ร้านค้าซื้อการ์ด (Buy)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_SHIFT],
         default_key: "SHIFT",
-        function: "Focus",
+        function: "ซูมเล็ง (Focus)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_H],
         default_key: "H",
-        function: "Dance",
+        function: "ท่าเต้น (Dance)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_ENTER],
         default_key: "ENTER",
-        function: "Chat",
+        function: "ช่องแชท (Chat)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_X],
         default_key: "X",
-        function: "Fire (Shoot)",
+        function: "ยิงปืน (Fire)",
         waiting: ""
     }, {
         key: keyboardMap[pc.KEY_T],
         default_key: "T",
-        function: "Inspect Weapon",
+        function: "ตรวจสอบอาวุธ (Inspect)",
         waiting: ""
     }, {
       key: keyboardMap[pc.KEY_J],
       default_key: "J",
-      function: "Toggle Viewmodel",
+      function: "ปิด/เปิดมุมมองมืออาวุธ (Viewmodel)",
       waiting: ""
     }, {
       key: keyboardMap[pc.KEY_F6],
       default_key: "F6",
-      function: "Toggle UI",
+      function: "ซ่อน/แสดงผล UI (Toggle UI)",
       waiting: ""
     },];
     if (e) {
         for (var n in t) {
-            t[n].default_key == e.default_key && (t[n].waiting = "Waiting for prompt...")
+            t[n].default_key == e.default_key && (t[n].waiting = "กำลังรอการกดปุ่ม...")
         }
         this.currentKey = e.default_key,
         this.app.keyboard.once("keydown", this.defineKey, this)
@@ -930,8 +930,8 @@ const customNextMatchMessages = () => {
       if (!this.timerEntity || !this.timerEntity.element || !this.timerEntity.element.text)
           return !1;
       var t = Math.max(this.time, 0);
-      t >= 0 && t <= 5 ? (this.timerEntity.element.text = 'Next Match starting in - [color="#ffc703"]' + t + "[/color]",
-      this.time > -1 && this.entity.sound.play("Count")) : this.timerEntity.element.text = 'Next Match starting in - [color="#ffc703"]' + t + "[/color]";
+      t >= 0 && t <= 5 ? (this.timerEntity.element.text = 'แมตช์ถัดไปกำลังจะเริ่มใน - [color="#ffc703"]' + t + "[/color]",
+      this.time > -1 && this.entity.sound.play("Count")) : this.timerEntity.element.text = 'แมตช์ถัดไปกำลังจะเริ่มใน - [color="#ffc703"]' + t + "[/color]";
       var e = this.time - 10;
       e = Math.max(e, 0),
       this.time--,
@@ -989,7 +989,7 @@ const customMatchEndMessages = () => {
       this.resultHolder.enabled = !0,
       this.scoresEntity.enabled = !1,
       pc.currentMap && (this.mapNameEntity.element.text = pc.currentMap + ""),
-      !0 === pc.isSpectator ? this.showMessage("GG & WP") : pc.isVictory ? this.showMessage("VICTORY") : this.showMessage("DEFEAT"),
+      !0 === pc.isSpectator ? this.showMessage("GG & WP") : pc.isVictory ? this.showMessage("ชนะ (VICTORY)") : this.showMessage("พ่ายแพ้ (DEFEAT)"),
       setTimeout(function(t) {
           t.showScoreTable(pc.stats)
       }, 3e3, this),
@@ -1003,13 +1003,13 @@ const customMatchEndMessages = () => {
       pc.stats) {
           var e = pc.stats[t];
           e.isMe && (this.skills = [{
-              name: "Experience",
+              name: "ค่าประสบการณ์ (XP)",
               score: e.experience
           }, {
-              name: "Bonus XP",
+              name: "โบนัส XP",
               score: e.bonus
           }, {
-              name: "Total Experience",
+              name: "รวมค่าประสบการณ์",
               score: e.experience + e.bonus
           }],
           this.app.fire("Miniplay:Save", "kills", e.kill),
@@ -1018,7 +1018,18 @@ const customMatchEndMessages = () => {
           this.app.fire("Miniplay:Save", "assist", e.assist),
           this.app.fire("Miniplay:Save", "headshot", e.headshot),
           this.app.fire("Miniplay:Save", "reward", e.reward),
-          this.app.fire("Miniplay:Save", "score", e.score))
+          this.app.fire("Miniplay:Save", "score", e.score),
+          typeof window.saveMatchStats === "function" && window.saveMatchStats({
+              kills: e.kill,
+              deaths: e.death,
+              assists: e.assist,
+              headshots: e.headshot,
+              score: e.score,
+              map: pc.currentMap,
+              mode: pc.currentMode,
+              victory: pc.isVictory,
+              timestamp: Date.now()
+          }))
       }
       this.skillPoints = [],
       this.voteBar.setLocalScale(.001, 1, 1),
