@@ -51,18 +51,9 @@ app.commandLine.appendSwitch("high-dpi-support", 1);
 updateSeen = 0;
 
 
-function addQuery(callback) {
-  var fname = path.join(__dirname, 'index.html');
-  var htmlData = fs.readFileSync(fname, 'utf8');
-  htmlData = htmlData.replace(/(verified\.js).+/,"$1?n=" + (Math.random() * 1e7 | 0).toString(16) + '"></script>');
-  callback();
-}
-
 function init() {
-  addQuery(()=>{
-    createInitWindow(`file:///${__dirname}/index.html`);
-    autoUpdater.checkForUpdatesAndNotify();
-  })
+  createInitWindow("https://venge.io/?client_version=true");
+  autoUpdater.checkForUpdatesAndNotify();
 }
   
 function createInitWindow(url) {
@@ -154,18 +145,15 @@ function createInitWindow(url) {
 
   const shortcut = require("electron-localshortcut");
   shortcut.register(initWin, "F1", () => {
-    //prevent cache
-    addQuery(()=>{
-          autoUpdater.checkForUpdatesAndNotify();
-          switch (checkURL(url)) {
-            case "social":
-              initWin.loadURL("https://social.venge.io");
-              break;
-            default:
-              initWin.loadURL(`file:///${__dirname}/index.html`);
-              break;
-          }
-    })
+    autoUpdater.checkForUpdatesAndNotify();
+    switch (checkURL(url)) {
+      case "social":
+        initWin.loadURL("https://social.venge.io");
+        break;
+      default:
+        initWin.loadURL("https://venge.io/?client_version=true");
+        break;
+    }
   });
 
   shortcut.register(initWin, "F2", () => {
@@ -179,10 +167,13 @@ function createInitWindow(url) {
   });
 
   shortcut.register(initWin, "F3", () => {
-      var game = initWin.webContents.getURL().split('#').pop();
-      var url = "https://venge.io/#"+game;
-      clipboard.writeText(url);
-      initWin.webContents.executeJavaScript('pc.app.fire("Chat:Message", "NeXi-Client", "Link copied!")').catch(e=>{});
+      let currentUrl = initWin.webContents.getURL();
+      if (currentUrl.includes("#")) {
+        var game = currentUrl.split('#').pop();
+        var inviteUrl = "https://venge.io/#"+game;
+        clipboard.writeText(inviteUrl);
+        initWin.webContents.executeJavaScript('pc.app.fire("Chat:Message", "NeXi-Client", "Link copied!")').catch(e=>{});
+      }
   })
 
   shortcut.register(initWin, "Alt+F4", () => {
@@ -196,9 +187,7 @@ function createInitWindow(url) {
     }
   });
   shortcut.register(initWin, "Ctrl+F5", () => {
-    addQuery(()=>{
-      initWin.webContents.reloadIgnoringCache();
-    })
+    initWin.webContents.reloadIgnoringCache();
   });
   shortcut.register(initWin, "F12", () => {
     initWin.webContents.openDevTools();
@@ -206,7 +195,7 @@ function createInitWindow(url) {
   shortcut.register(initWin, "F11", () => {
     initWin.setSimpleFullScreen(!initWin.isSimpleFullScreen());
   });
-  shortcut.register(initWin, "ESC", () => {
+  shortcut.register(initWin, "Escape", () => {
     initWin.webContents.executeJavaScript(`
                   document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
                   document.exitPointerLock();
@@ -242,21 +231,40 @@ function createInitWindow(url) {
 
   function checkURL(url) {
     if (url.indexOf("social.venge.io") != -1) return "social";
-    if (url.includes("index.html") == false) return "unknown";
-    url = url.split("/");
-    let newURL = url[url.length - 1];
-    let path = newURL.substring("index.html".length);
-    switch (path.length) {
-      case 0:
-        return "menu";
-      case 1:
-        return "searching for game";
-      case 6:
-        return "game";
-      case 15:
-        return "spectate";
-      default:
-        return "weird thing should die";
+    if (url.includes("venge.io") === false && url.includes("index.html") === false) return "unknown";
+    try {
+      let parsed = new URL(url);
+      let hash = parsed.hash;
+      switch (hash.length) {
+        case 0:
+          return "menu";
+        case 1:
+          return "searching for game";
+        case 6:
+          return "game";
+        case 15:
+          return "spectate";
+        default:
+          return "weird thing should die";
+      }
+    } catch (e) {
+      url = url.split("/");
+      let newURL = url[url.length - 1];
+      let path = newURL.includes("index.html") ? newURL.substring("index.html".length) : newURL;
+      let hashIndex = path.indexOf("#");
+      let hash = hashIndex !== -1 ? path.substring(hashIndex) : "";
+      switch (hash.length) {
+        case 0:
+          return "menu";
+        case 1:
+          return "searching for game";
+        case 6:
+          return "game";
+        case 15:
+          return "spectate";
+        default:
+          return "weird thing should die";
+      }
     }
   }
 
@@ -366,9 +374,9 @@ function createInitWindow(url) {
       let inviteCode = arr1[arr1.length - 1];
 
       if (isSpectate) {
-        initWin.loadURL(`${__dirname}/index.html#Spectate:${inviteCode}`);
+        initWin.loadURL(`https://venge.io/?client_version=true#Spectate:${inviteCode}`);
       } else {
-        initWin.loadURL(`${__dirname}/index.html#${inviteCode}`);
+        initWin.loadURL(`https://venge.io/?client_version=true#${inviteCode}`);
       }
     }
 
